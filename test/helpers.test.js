@@ -245,6 +245,32 @@ test(
 )
 
 test(
+  'Generated Macro Negative Value',
+  () => {
+    let options = { hash: { endian: 'big' } }
+    return zclHelper
+      .as_generated_default_macro('-5', 8, options)
+      .then((res) =>
+        expect(res).toBe(' 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfb,')
+      )
+  },
+  testUtil.timeout.short()
+)
+
+test(
+  'Generated Macro Float Value',
+  () => {
+    let options = { hash: { endian: 'little' } }
+    return zclHelper
+      .as_generated_default_macro('17.0', 8, options)
+      .then((res) =>
+        expect(res).toBe('0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x88, 0x41, ')
+      )
+  },
+  testUtil.timeout.short()
+)
+
+test(
   'Attribute Mask',
   () =>
     zclHelper
