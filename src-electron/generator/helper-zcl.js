@@ -2210,6 +2210,78 @@ async function if_mfg_specific_cluster(clusterId, options) {
 }
 
 /**
+ *
+ * @param {*} value
+ * @param {*} size
+ * @returns The negative hex value for a given positive hex value padded with
+ * the given size.
+ */
+async function convert_float_to_hex(value, size) {
+  let res = ''
+  const arrayBuffer = new ArrayBuffer(size)
+  const dataView = new DataView(arrayBuffer)
+  dataView.setFloat32(0, value, false)
+  for (let i = 0; i < size; i++) {
+    let t = dataView.getUint8(i).toString(16)
+    res += t == 0 ? '00' : t
+  }
+  return '0x' + res
+}
+
+/**
+ *
+ * @param {*} value
+ * @param {*} size
+ * @returns the negative hex value for a given positive hex value padded with
+ * the given size.
+ */
+async function get_negative_hex_value(value, size) {
+  let res = ''
+  // Performing negation using the binary form
+  let tempBinary = ''
+  let byteArray = value.replace('0x', '').match(/.{1,2}/g)
+  for (let b of byteArray) {
+    let binValue = parseInt(b, 16).toString(2)
+    tempBinary += '0'.repeat(8 - binValue.length) + binValue
+  }
+  let paddingSize = 8 * size - byteArray.length * 8
+  tempBinary = '0'.repeat(paddingSize) + tempBinary
+  tempBinary = tempBinary.replaceAll('1', 't')
+  tempBinary = tempBinary.replaceAll('0', '1')
+  tempBinary = tempBinary.replaceAll('t', '0')
+
+  // Adding 1 to the binary number
+  if (tempBinary.charAt(tempBinary.length - 1) == '0') {
+    tempBinary = tempBinary.replace(/0$/, '1')
+  } else {
+    let carry = '1'
+    let result = ''
+    for (let i = tempBinary.length - 1; i >= 0; i--) {
+      if (tempBinary.charAt(i) == '1') {
+        if (carry == '1') {
+          result = '0' + result
+        } else {
+          result = tempBinary.charAt(i) + result
+        }
+      } else {
+        if (carry == '1') {
+          result = '1' + result
+          carry = '0'
+        } else {
+          result = tempBinary.charAt(i) + result
+        }
+      }
+    }
+    tempBinary = result
+  }
+  for (let i = 0; i < tempBinary.length / 8; i++) {
+    let t = tempBinary.substring(i * 8, (i + 1) * 8)
+    res += parseInt(t, 2).toString(16)
+  }
+  return '0x' + res
+}
+
+/**
  * Given the value and size of an attribute along with endian as an option.
  * This helper returns the attribute value as big/little endian.
  * Example: {{as_generated_default_macro 0x00003840 4 endian="big"}}
@@ -2221,11 +2293,21 @@ async function if_mfg_specific_cluster(clusterId, options) {
  */
 async function as_generated_default_macro(value, attributeSize, options) {
   let default_macro_signature = ''
+  let temp = ''
   if (attributeSize > 2) {
-    let default_macro = helperC
-      .asHex(value, null, null)
-      .replace('0x', '')
-      .match(/.{1,2}/g)
+    // Positive or Negative Value
+    let tempValue = value > 0 ? value : Math.abs(value)
+    // Float value
+    if (!isNaN(value) && value.toString().indexOf('.') != -1) {
+      temp = await convert_float_to_hex(tempValue, attributeSize)
+    } else {
+      temp = helperC.asHex(tempValue, null, null)
+    }
+    // Negative value
+    if (value < 0) {
+      temp = await get_negative_hex_value(temp, attributeSize)
+    }
+    let default_macro = temp.replace('0x', '').match(/.{1,2}/g)
     let padding_length = attributeSize - default_macro.length
     for (let i = 0; i < padding_length; i++) {
       default_macro_signature += '0x00, '
@@ -2233,14 +2315,15 @@ async function as_generated_default_macro(value, attributeSize, options) {
     for (let m of default_macro) {
       default_macro_signature += ' 0x' + m + ','
     }
-    // Applying endianess to attributes with size less than equal to 8 bytes.
-    // Thus only swapping int64u or smaller
-    if (options.hash.endian != 'big' && attributeSize <= 8) {
-      default_macro_signature = default_macro_signature
-        .split(' ')
-        .reverse()
-        .join(' ')
-    }
+  }
+
+  // Applying endianess to attributes with size less than equal to 8 bytes.
+  // Thus only swapping int64u or smaller
+  if (options.hash.endian != 'big' && attributeSize <= 8) {
+    default_macro_signature = default_macro_signature
+      .split(' ')
+      .reverse()
+      .join(' ')
   }
   return default_macro_signature
 }
