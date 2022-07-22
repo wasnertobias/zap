@@ -964,7 +964,7 @@ function endpoint_config(options) {
     spaceForDefaultValue: options.hash.spaceForDefaultValue,
   }
   let promise = templateUtil
-    .ensureZclPackageId(newContext)
+    .ensureZclPackageIds(newContext)
     .then(() => queryEndpoint.selectAllEndpoints(db, sessionId))
     .then((endpoints) => {
       newContext.endpoints = endpoints

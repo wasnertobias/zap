@@ -111,30 +111,6 @@ async function collectBlocks(resultArray, options, context) {
 }
 
 /**
- * Returns the promise that resolves with the ZCL properties package id.
- *
- * @param {*} context
- * @returns promise that resolves with the package id.
- */
-async function ensureZclPackageId(context) {
-  if ('zclPackageId' in context.global) {
-    return context.global.zclPackageId
-  } else {
-    let pkgs = await queryPackage.getSessionPackagesByType(
-      context.global.db,
-      context.global.sessionId,
-      dbEnum.packageType.zclProperties
-    )
-    if (pkgs.length == 0) {
-      return null
-    } else {
-      context.global.zclPackageId = pkgs[0].id
-      return pkgs[0].id
-    }
-  }
-}
-
-/**
  * Returns the promise that resolves with all ZCL package id specific to current session.
  *
  * @param {*} context
@@ -390,7 +366,6 @@ function deprecatedHelper(fn, explanation) {
 }
 
 exports.collectBlocks = collectBlocks
-exports.ensureZclPackageId = ensureZclPackageId
 exports.ensureZclPackageIds = ensureZclPackageIds
 exports.ensureTemplatePackageId = ensureTemplatePackageId
 exports.ensureZclClusterSdkExtensions = ensureZclClusterSdkExtensions

@@ -48,7 +48,7 @@ WHERE PACKAGE_REF = ? ORDER BY NAME`,
   return rows.map(dbMapping.map.bitmap)
 }
 
-async function selectBitmapByName(db, packageId, name) {
+async function selectBitmapByName(db, packageIds, name) {
   return dbApi
     .dbGet(
       db,
@@ -59,8 +59,8 @@ SELECT
   BITMAP.SIZE AS SIZE
 FROM BITMAP
 INNER JOIN DATA_TYPE ON BITMAP.BITMAP_ID = DATA_TYPE.DATA_TYPE_ID
-WHERE (DATA_TYPE.NAME = ? OR DATA_TYPE.NAME = ?) AND DATA_TYPE.PACKAGE_REF = ?`,
-      [name, name.toLowerCase(), packageId]
+WHERE (DATA_TYPE.NAME = ? OR DATA_TYPE.NAME = ?) AND DATA_TYPE.PACKAGE_REF IN (?)`,
+      [name, name.toLowerCase(), packageIds]
     )
     .then(dbMapping.map.bitmap)
 }

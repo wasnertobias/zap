@@ -1099,7 +1099,7 @@ ORDER BY CODE`
     .then((rows) => rows.map(dbMapping.map.command))
 }
 
-async function selectAllCommandsBySource(db, source, packageId) {
+async function selectAllCommandsBySource(db, source, packageIds) {
   return dbApi
     .dbAll(
       db,
@@ -1121,9 +1121,9 @@ FROM
   COMMAND
 WHERE
   SOURCE = ?
-  AND PACKAGE_REF = ?
+  AND PACKAGE_REF IN (?)
 ORDER BY CODE`,
-      [source, packageId]
+      [source, packageIds]
     )
     .then((rows) => rows.map(dbMapping.map.command))
 }
@@ -1134,13 +1134,15 @@ ORDER BY CODE`,
  *
  * @param {*} db
  * @param {*} clusterId
+ * @param {*} source
+ * @param {*} packageIds
  * @returns promise of an array of command rows, which represent per-cluster commands, excluding global commands.
  */
 async function selectCommandsByClusterIdAndSource(
   db,
   clusterId,
   source,
-  packageId
+  packageIds
 ) {
   return dbApi
     .dbAll(
@@ -1161,9 +1163,9 @@ FROM COMMAND
 WHERE
   CLUSTER_REF = ?
   AND SOURCE = ?
-  AND PACKAGE_REF = ?
+  AND PACKAGE_REF IN (?)
 ORDER BY CODE`,
-      [clusterId, source, packageId]
+      [clusterId, source, packageIds]
     )
     .then((rows) => rows.map(dbMapping.map.command))
 }
@@ -1235,7 +1237,7 @@ ORDER BY
     .then((rows) => rows.map(dbMapping.map.command))
 }
 
-async function selectAllCommandArguments(db, packageId) {
+async function selectAllCommandArguments(db, packageIds) {
   return dbApi
     .dbAll(
       db,
@@ -1255,9 +1257,9 @@ SELECT
 FROM COMMAND_ARG, COMMAND
 WHERE
   COMMAND_ARG.COMMAND_REF = COMMAND.COMMAND_ID
-  AND COMMAND.PACKAGE_REF = ?
+  AND COMMAND.PACKAGE_REF IN (?)
 ORDER BY COMMAND_REF, FIELD_IDENTIFIER`,
-      [packageId]
+      [packageIds]
     )
     .then((rows) => rows.map(dbMapping.map.commandArgument))
 }
@@ -1267,7 +1269,6 @@ ORDER BY COMMAND_REF, FIELD_IDENTIFIER`,
  *
  * @param {*} db
  * @param {*} commandId
- * @param {*} [packageId=null]
  * @returns A promise with number of command arguments for a command
  */
 async function selectCommandArgumentsCountByCommandId(db, commandId) {

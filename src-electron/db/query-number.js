@@ -30,7 +30,7 @@ const dbMapping = require('./db-mapping')
  * @param packageId
  * @returns number or undefined
  */
-async function selectNumberByName(db, packageId, name) {
+async function selectNumberByName(db, packageIds, name) {
   return dbApi
     .dbGet(
       db,
@@ -42,8 +42,8 @@ async function selectNumberByName(db, packageId, name) {
     NUMBER.SIZE AS SIZE
   FROM NUMBER
   INNER JOIN DATA_TYPE ON NUMBER.NUMBER_ID = DATA_TYPE.DATA_TYPE_ID
-  WHERE NAME = ? AND PACKAGE_REF = ?`,
-      [name, packageId]
+  WHERE NAME = ? AND PACKAGE_REF IN (?)`,
+      [name, packageIds]
     )
     .then(dbMapping.map.number)
 }

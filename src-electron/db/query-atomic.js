@@ -59,10 +59,10 @@ async function selectAllAtomics(db, packageId) {
  * @param {*} packageId
  * @param {*} typeName
  */
-async function selectAtomicType(db, packageId, name) {
+async function selectAtomicType(db, packageIds, name) {
   return dbApi
-    .dbGet(db, `${ATOMIC_QUERY} WHERE PACKAGE_REF = ? AND UPPER(NAME) = ?`, [
-      packageId,
+    .dbGet(db, `${ATOMIC_QUERY} WHERE PACKAGE_REF IN (?) AND UPPER(NAME) = ?`, [
+      packageIds,
       name == null ? name : name.toUpperCase(),
     ])
     .then(dbMapping.map.atomic)
@@ -108,12 +108,12 @@ async function createCache(db, packageId) {
  * @param {*} packageId
  * @param {*} typeName
  */
-async function selectAtomicTypeFromCache(db, packageId, name) {
+async function selectAtomicTypeFromCache(db, packageIds, name) {
   let cache
-  if (dbCache.isCached(cacheKey, packageId)) {
-    cache = dbCache.get(cacheKey, packageId)
+  if (dbCache.isCached(cacheKey, packageIds)) {
+    cache = dbCache.get(cacheKey, packageIds)
   } else {
-    cache = await createCache(db, packageId)
+    cache = await createCache(db, packageIds)
   }
   return cache.byName[name.toUpperCase()]
 }

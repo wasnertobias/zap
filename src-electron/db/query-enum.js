@@ -184,7 +184,7 @@ WHERE
  * @param {*} packageId
  * @returns enum or undefined
  */
-async function selectEnumByName(db, name, packageId) {
+async function selectEnumByName(db, name, packageIds) {
   return dbApi
     .dbGet(
       db,
@@ -200,9 +200,9 @@ INNER JOIN
 ON
   ENUM.ENUM_ID = DATA_TYPE.DATA_TYPE_ID
 WHERE
-  (DATA_TYPE.NAME = ? OR DATA_TYPE.NAME = ?)AND PACKAGE_REF = ?
+  (DATA_TYPE.NAME = ? OR DATA_TYPE.NAME = ?)AND PACKAGE_REF IN (?)
 ORDER BY NAME`,
-      [name, name.toLowerCase(), packageId]
+      [name, name.toLowerCase(), packageIds]
     )
     .then(dbMapping.map.enum)
 }
